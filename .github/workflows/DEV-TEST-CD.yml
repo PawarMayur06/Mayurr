@@ -1,0 +1,36 @@
+name: Release Workflow
+on:
+  workflow_dispatch:
+
+env:
+  rg-name: "pactiv-demo"
+  target-adf: "pactiv-prod-adf"
+
+permissions:
+  id-token: write
+  contents: write
+  actions: read
+
+jobs:
+  release:
+    runs-on: ubuntu-24.04
+    environment: DEV
+    steps:
+      - name: Download a Build Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ExportedArmTemplate
+
+      - name: Login via Az module
+        uses: Azure/login@v2.2.0
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+          enable-AzPSSession: true
+
+      - name: data-factory-deploy
+        uses: Azure/data-factory-deploy-action@v1.2.0
+        with:
+          resourceGroupName: ${{ env.rg-name}}
+          dataFactoryName: ${{ env.target-adf}}
+          armTemplateFile: ARMTemplateForFactory.json
+          armTemplateParametersFile: ARMTemplateParametersForFactory.json
